@@ -117,9 +117,9 @@ window.onload = wrap_img;
 <p>My ambition is to build a fully automated trading system that:</p>
 <ul>
 <li>Downloads the latest data</li>
-<li>Performes some cleaning steps</li>
+<li>Performs some cleaning steps</li>
 <li>Generates trading signals</li>
-<li>Openes and closes positions in accordance with a risk management framework</li>
+<li>Opens and closes positions in accordance with a risk management framework</li>
 </ul>
 <p>This system will be built step by step in a series of posts. As the list suggests, the first step is to update the database with the latest data when it is available. First, what database are we using?</p>
 <h2 id="Database">Database<a class="anchor-link" href="#Database"> </a></h2><p>There are many options when it comes to chosing a database. The most popular type of database for tabular data is a SQL database. This is due to their good performance and data structure. SQL databases are structured in a tabular fasion which is the same structure that pandas dataframes are structured. Noteworthy SQL databases are MariaDB, PostgreSQL and SQLite. However, a SQL database will not be used in this project for a number of reasons. Instead, a NOSQL database will be used. More specifically, <a href="https://en.wikipedia.org/wiki/MongoDB">MongoDB</a>. But, why? First let's address the pros and cons of SQL databases. It is true that they usually have good performance. This can be a deciding factor, but for small amounts of data (&lt;50GB) there might not be any difference. NOSQL databases can be just as performant if queried correctly and if indicies are used. When it comes to the data structure, some restructuring of the data has to be performed before it can be inserted into a NOSQL database. But this is not a problem, many python libraries have functions such as <code>dataframe.to_dict("records")</code> that easily converts tabular data into a list of dictionaries suited for NOSQL databases. These arguments cancel eachother out, and either database type could be used. The final con of SQL databases that tips the needle in favor of NOSQL databases is that the python libraries that are used to access SQL databases have terrible APIs. Not only that, setting up such a database is also a painful process that takes a lot of time if it is to be done right.</p>
@@ -206,7 +206,7 @@ This cell also contains the query for all the stock symbols. These are stored in
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Download-loop">Download loop<a class="anchor-link" href="#Download-loop"> </a></h2><p>This is where the magic happens. This for-loop loops through the list of symbols previously retrieved and performes these steps:</p>
+<h2 id="Download-loop">Download loop<a class="anchor-link" href="#Download-loop"> </a></h2><p>This is where the magic happens. This for-loop loops through the list of symbols previously retrieved and performs these steps:</p>
 <ul>
 <li>Downloads the data.</li>
 <li>Removes rows with NaN values.</li>
