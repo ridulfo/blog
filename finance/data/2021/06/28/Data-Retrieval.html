@@ -10,13 +10,13 @@
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Getting the data!" />
 <meta property="og:description" content="Getting the data!" />
-<link rel="canonical" href="https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html" />
-<meta property="og:url" content="https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html" />
+<link rel="canonical" href="https://nicoloridulfo.github.io/blog/finance/data/2021/06/28/Data-Retrieval.html" />
+<meta property="og:url" content="https://nicoloridulfo.github.io/blog/finance/data/2021/06/28/Data-Retrieval.html" />
 <meta property="og:site_name" content="ValueLabs.Space" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2021-06-28T00:00:00-05:00" />
 <script type="application/ld+json">
-{"url":"https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html","@type":"BlogPosting","headline":"Downloading daily stock data","dateModified":"2021-06-28T00:00:00-05:00","datePublished":"2021-06-28T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html"},"description":"Getting the data!","@context":"https://schema.org"}</script>
+{"url":"https://nicoloridulfo.github.io/blog/finance/data/2021/06/28/Data-Retrieval.html","@type":"BlogPosting","headline":"Downloading daily stock data","dateModified":"2021-06-28T00:00:00-05:00","datePublished":"2021-06-28T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://nicoloridulfo.github.io/blog/finance/data/2021/06/28/Data-Retrieval.html"},"description":"Getting the data!","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nicoloridulfo.github.io/blog/feed.xml" title="ValueLabs.Space" /><link rel="shortcut icon" type="image/x-icon" href="/blog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
@@ -77,15 +77,12 @@ window.onload = wrap_img;
        • <span class="read-time" title="Estimated read time">
     
     
-      4 min read
+      6 min read
     
 </span></p>
 
     
       <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
-      
-        <a class="category-tags-link" href="/blog/categories/#jupyter">jupyter</a>
-        &nbsp;
       
         <a class="category-tags-link" href="/blog/categories/#finance">finance</a>
         &nbsp;
@@ -130,6 +127,24 @@ window.onload = wrap_img;
 
 <div class="container" id="notebook-container">
         
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>My ambition is to build a fully automated trading system that:</p>
+<ul>
+<li>Downloads the latest data</li>
+<li>Performes some cleaning steps</li>
+<li>Generates trading signals</li>
+<li>Openes and closes positions in accordance with a risk management framework
+This system will be built step by step in a series of posts. As the list suggests, the first step is to update the database with the latest data when it is available. First, what database are we using?
+## Database
+There are many options when it comes to chosing a database. The most popular type of database for tabular data is a SQL database. This is due to their good performance and data structure. SQL databases are structured in a tabular fasion which is the same structure that pandas dataframes are structured. Noteworthy SQL databases are MariaDB, PostgreSQL and SQLite. However, a SQL database will not be used in this project for a number of reasons. Instead, a NOSQL database will be used. More specifically, <a href="https://en.wikipedia.org/wiki/MongoDB">MongoDB</a>. But, why? First let's address the pros and cons of SQL databases. It is true that they usually have good performance. This can be a deciding factor, but for small amounts of data (&lt;50GB) there might not be any difference. NOSQL databases can be just as performant if queried correctly and if indicies are used. When it comes to the data structure, some restructuring of the data has to be performed before it can be inserted into a NOSQL database. But this is not a problem, many python libraries have functions such as <code>dataframe.to_dict("records")</code> that easily converts tabular data into a list of dictionaries suited for NOSQL databases. These arguments cancel eachother out, and either database type could be used. The final con of SQL databases that tips the needle in favor of NOSQL databases is that the python libraries that are used to access SQL databases have terrible APIs. Not only that, setting up such a database is also a painful process that takes a lot of time if it is to be done right.
+## Imports and connections
+Now for the program used to download the data. The following imports and connections are going to be needed.</li>
+</ul>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -339,7 +354,7 @@ This cell also contains the query for all the stock symbols. These are stored in
 
 
 
-  </div><a class="u-url" href="/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html" hidden></a>
+  </div><a class="u-url" href="/blog/finance/data/2021/06/28/Data-Retrieval.html" hidden></a>
 </article>
       </div>
     </main><footer class="site-footer h-card">
