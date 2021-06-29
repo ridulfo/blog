@@ -1,1 +1,1 @@
-Sitemap: https://valuelabs.space/blog/sitemap.xml
+Sitemap: https://valuelabs.space/sitemap.xml
