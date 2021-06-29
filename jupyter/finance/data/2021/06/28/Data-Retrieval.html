@@ -8,15 +8,15 @@
 <meta name="generator" content="Jekyll v4.1.1" />
 <meta property="og:title" content="Downloading daily stock data" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="A blog about computer science and finance" />
-<meta property="og:description" content="A blog about computer science and finance" />
-<link rel="canonical" href="https://nicoloridulfo.github.io/blog/2021/06/28/Data-Retrieval.html" />
-<meta property="og:url" content="https://nicoloridulfo.github.io/blog/2021/06/28/Data-Retrieval.html" />
+<meta name="description" content="Getting the data!" />
+<meta property="og:description" content="Getting the data!" />
+<link rel="canonical" href="https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html" />
+<meta property="og:url" content="https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html" />
 <meta property="og:site_name" content="ValueLabs.Space" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2021-06-28T00:00:00-05:00" />
 <script type="application/ld+json">
-{"url":"https://nicoloridulfo.github.io/blog/2021/06/28/Data-Retrieval.html","@type":"BlogPosting","headline":"Downloading daily stock data","dateModified":"2021-06-28T00:00:00-05:00","datePublished":"2021-06-28T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://nicoloridulfo.github.io/blog/2021/06/28/Data-Retrieval.html"},"description":"A blog about computer science and finance","@context":"https://schema.org"}</script>
+{"url":"https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html","@type":"BlogPosting","headline":"Downloading daily stock data","dateModified":"2021-06-28T00:00:00-05:00","datePublished":"2021-06-28T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://nicoloridulfo.github.io/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html"},"description":"Getting the data!","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nicoloridulfo.github.io/blog/feed.xml" title="ValueLabs.Space" /><link rel="shortcut icon" type="image/x-icon" href="/blog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
@@ -71,7 +71,7 @@ window.onload = wrap_img;
         <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
-    <h1 class="post-title p-name" itemprop="name headline">Downloading daily stock data</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-28T00:00:00-05:00" itemprop="datePublished">
+    <h1 class="post-title p-name" itemprop="name headline">Downloading daily stock data</h1><p class="page-description">Getting the data!</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-28T00:00:00-05:00" itemprop="datePublished">
         Jun 28, 2021
       </time>
        • <span class="read-time" title="Estimated read time">
@@ -81,6 +81,19 @@ window.onload = wrap_img;
     
 </span></p>
 
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/blog/categories/#jupyter">jupyter</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/blog/categories/#finance">finance</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/blog/categories/#data">data</a>
+        
+      
+      </p>
     
 
     
@@ -124,7 +137,7 @@ window.onload = wrap_img;
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">yfinance</span> <span class="k">as</span> <span class="nn">yf</span>
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">yfinance</span> <span class="k">as</span> <span class="nn">yf</span>
 <span class="kn">import</span> <span class="nn">pymongo</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -158,7 +171,7 @@ This cell also contains the query for all the stock symbols. These are stored in
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">aggreg_query</span> <span class="o">=</span> <span class="p">[</span>
+<div class=" highlight hl-python"><pre><span></span><span class="n">aggreg_query</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">{</span>
                 <span class="s1">&#39;$match&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
             <span class="p">},</span> <span class="p">{</span>
@@ -219,7 +232,7 @@ This cell also contains the query for all the stock symbols. These are stored in
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">progress</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span>
+<div class=" highlight hl-python"><pre><span></span><span class="n">progress</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">insId</span> <span class="ow">in</span> <span class="n">progress</span><span class="p">:</span>
     <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="c1"># Set progress bar description</span>
     
@@ -264,7 +277,7 @@ This cell also contains the query for all the stock symbols. These are stored in
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#----------------------------------------------------------------------------</span>
+<div class=" highlight hl-python"><pre><span></span><span class="c1">#----------------------------------------------------------------------------</span>
 
 <span class="c1">#!/home/ubuntu/data_downloader/env/bin/python</span>
 <span class="kn">import</span> <span class="nn">yfinance</span> <span class="k">as</span> <span class="nn">yf</span>
@@ -326,7 +339,7 @@ This cell also contains the query for all the stock symbols. These are stored in
 
 
 
-  </div><a class="u-url" href="/blog/2021/06/28/Data-Retrieval.html" hidden></a>
+  </div><a class="u-url" href="/blog/jupyter/finance/data/2021/06/28/Data-Retrieval.html" hidden></a>
 </article>
       </div>
     </main><footer class="site-footer h-card">
