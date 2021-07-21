@@ -263,7 +263,7 @@ This cell also contains the query for all the stock symbols. These are stored in
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Cronjob">Cronjob<a class="anchor-link" href="#Cronjob"> </a></h2><p>To make the data retrieval automatic it has to be scheduled. This can easily be done using cronjob on linux machines. The following script will be made into a <a href="https://en.wikipedia.org/wiki/Cron">cronjob</a> and this parameter will be added to the crontab <code>0 18 * * 1-5 /home/ubuntu/data_downloader/daily_downloader.py</code>. The parameter means that the command should be run every weekday at 18 o'clock.</p>
+<h2 id="Cronjob">Cronjob<a class="anchor-link" href="#Cronjob"> </a></h2><p>To make the data retrieval automatic it has to be scheduled. This can easily be done using cronjob on linux machines. The following script will be made into a <a href="https://en.wikipedia.org/wiki/Cron">cronjob</a> and this parameter will be added to the crontab <code>0 18 * * 1-5 data_downloader/daily_downloader.py</code>. The parameter means that the command should be run every weekday at 18 o'clock.</p>
 
 </div>
 </div>
@@ -277,7 +277,7 @@ This cell also contains the query for all the stock symbols. These are stored in
     <div class="input_area">
 <div class=" highlight hl-python"><pre><span></span><span class="c1">#----------------------------------------------------------------------------</span>
 
-<span class="c1">#!/home/ubuntu/data_downloader/env/bin/python</span>
+<span class="c1">#!data_downloader/env/bin/python</span>
 <span class="kn">import</span> <span class="nn">yfinance</span> <span class="k">as</span> <span class="nn">yf</span>
 <span class="kn">import</span> <span class="nn">pymongo</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
