@@ -1,1 +1,1 @@
-Sitemap: https://valuelabs.space/sitemap.xml
+Sitemap: https://pistock.io/sitemap.xml
