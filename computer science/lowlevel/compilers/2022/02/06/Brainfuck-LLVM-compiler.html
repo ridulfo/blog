@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Writing a LLVM compiler using Python | PiStock.io</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Writing a LLVM compiler using Python" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A blog about computer science and finance" />
+<meta property="og:description" content="A blog about computer science and finance" />
+<link rel="canonical" href="https://pistock.io/computer%20science/lowlevel/compilers/2022/02/06/Brainfuck-LLVM-compiler.html" />
+<meta property="og:url" content="https://pistock.io/computer%20science/lowlevel/compilers/2022/02/06/Brainfuck-LLVM-compiler.html" />
+<meta property="og:site_name" content="PiStock.io" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-02-06T00:00:00-06:00" />
+<script type="application/ld+json">
+{"url":"https://pistock.io/computer%20science/lowlevel/compilers/2022/02/06/Brainfuck-LLVM-compiler.html","@type":"BlogPosting","headline":"Writing a LLVM compiler using Python","dateModified":"2022-02-06T00:00:00-06:00","datePublished":"2022-02-06T00:00:00-06:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://pistock.io/computer%20science/lowlevel/compilers/2022/02/06/Brainfuck-LLVM-compiler.html"},"description":"A blog about computer science and finance","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://pistock.io/feed.xml" title="PiStock.io" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">PiStock.io</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Writing a LLVM compiler using Python</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-02-06T00:00:00-06:00" itemprop="datePublished">
+        Feb 6, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      13 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#computer science">computer science</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#lowlevel">lowlevel</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#compilers">compilers</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          
+          
+          
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-02-06-Brainfuck-LLVM-compiler.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Recently I have been fascinated by the world of compiled programming languages. My current day to day work mainly involves interpreted languages such as Python and TypeScript. These languages are great for productivity, but they leave a lot to be desired when it comes to performance and resource usage (see <a href="https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html">benchmarks</a>). In order to learn more about compiled languages I started writing small programs in C++, go and Rust. Rust is awesome! In 13 lines of code a rust noob can managed to write a function that looks for a string (in lowercase and uppercase) inside of a SHA256 hash. The kicker, it is fully <strong>parallel</strong> thanks to the rayon library! This is usually not that easy to do in other system languages. The only difference between the single threaded and parallel code is <code>.into_par_iter()</code> part.</p>
+<div class="highlight"><pre><span></span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">find_hash</span><span class="p">(</span><span class="n">name</span>: <span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">String</span> <span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">name_upper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">name</span><span class="p">.</span><span class="n">to_uppercase</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="k">u64</span><span class="o">..</span><span class="kt">u64</span>::<span class="n">MAX</span><span class="p">).</span><span class="n">into_par_iter</span><span class="p">().</span><span class="n">find_any</span><span class="p">(</span><span class="o">|&amp;</span><span class="n">i</span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">hasher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Sha256</span>::<span class="n">new</span><span class="p">();</span><span class="w"></span>
+<span class="w">        </span><span class="n">hasher</span><span class="p">.</span><span class="n">update</span><span class="p">(</span><span class="n">i</span><span class="p">.</span><span class="n">to_string</span><span class="p">().</span><span class="n">as_bytes</span><span class="p">());</span><span class="w"></span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base64</span>::<span class="n">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hasher</span><span class="p">.</span><span class="n">finalize</span><span class="p">());</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">hash</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">hash</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="n">name_upper</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">});</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">hasher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Sha256</span>::<span class="n">new</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">hasher</span><span class="p">.</span><span class="n">update</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">unwrap</span><span class="p">().</span><span class="n">to_string</span><span class="p">().</span><span class="n">as_bytes</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base64</span>::<span class="n">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hasher</span><span class="p">.</span><span class="n">finalize</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">hash</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+<p>There is something that Rust has in common with that this post is about, it compiles down to <a href="https://en.wikipedia.org/wiki/LLVM">LLVM</a> intermediate representation (IR). LLVM is basically a set of tools for developers to make compilers. A developer just needs to get their code into IR. After that, LLVM can optimize the IR for various metrics and then either run it in a jitted execution engine or compile it to machine code. One other nice thing about IR is that it is "portable" (we'll come to why I wrapped portable in quotes). There is no need to rewrite your compiler for every system architecture.</p>
+<h2 id="Brainfuck">Brainfuck<a class="anchor-link" href="#Brainfuck"> </a></h2><p>In order to learn LLVM I decided to implement a compiler for one of the simplest programming languages: <a href="https://en.wikipedia.org/wiki/Brainfuck">brainfuck</a>(BF). It is a tape based language that only has these operators: <code>+</code> <code>-</code> <code>&lt;</code> <code>&gt;</code> <code>[</code> <code>]</code> <code>.</code> <code>,</code>. When a BF program starts an array of 8 bit integers is initialized with zeros, this is the tape. There is also a pointer that we'll call <code>tape_ptr</code> that points to the "current" element in the array. A program might look something like this: <code>+++.</code>. This means increment the integer at the <code>tape_ptr</code> by one three times, then write the integer at the <code>tape_ptr</code> to the standard output (in our case the console). One would think that a three would be printed, but the console interprets the integer as a char type. A char of value “3” does not display. If we wanted a three to print we would have to write <code>-[-----&gt;+&lt;]&gt;.</code>. This program decrements the current element (which overflows into 255). Then it enters a sort of while-loop given by <code>[]</code>. The code between the brackets is looped "while the current element is not zero". The <code>&gt;</code> and <code>&lt;</code> shift the position of the <code>tape_ptr</code> either to the right or left. The program therefore does the following:</p>
+<ul>
+<li><code>-</code> decrement the current position</li>
+<li><code>[-----&gt;+&lt;]</code><ul>
+<li><code>-----</code> decrement the current element 5 times</li>
+<li><code>&gt;</code> move one step to the right</li>
+<li><code>+</code> increment the current element</li>
+<li><code>&lt;</code> move on step to the left (the initial position)</li>
+<li><code>]</code> is the value at the current element zero? <ul>
+<li>if TRUE continue to the next operation (to the right)</li>
+<li>if FALSE go back to the previous <code>[</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>.</code> write the current value to stdout</li>
+</ul>
+<p>The result is that the element in the second position is incremented once for every time the element in the first position is decremented five times. This gives <code>255/5=51</code>, where <code>255</code> is the overflown integer and <code>51</code> is the ascii character <code>'3'</code>. We will ignore the <code>,</code> instruction as it is quite useless; I have personally never used it. It is used for reading from stdin. However, if one is interested in writing programs in BF one should implement it in order to be able to use the language fully!</p>
+<h2 id="Now-to-the-compiler">Now to the compiler<a class="anchor-link" href="#Now-to-the-compiler"> </a></h2><p>In unrelated project have used a python library called <a href="https://numba.pydata.org">Numba</a> a lot to speed up numerical computations. It manages to be so fast by compiling a subset of python down to IR which is then run on LLVM's jit execution engine. It can easily speed up python by <a href="https://github.com/nicoloridulfo/Sudoku-solver-implementations">24 times</a> and come close to C++ speeds. Numba uses a library called <a href="https://github.com/numba/llvmlite">llvmlite</a> to generate the IR. This is the library we are going to be using.</p>
+<p>This whole project has really been a brainfuck. The documentation has been much thinner than I am used and, in some cases, nonexistent. To learn how to make <a href="https://en.wikipedia.org/wiki/System_call">system calls</a> to the operating system kernel in order to write to stdout I had to read what registers to populate with what values by looking at source code. Because we are doing this on... Darwin ARM64! Which wants to have values in other registers than the linux on ARM64, or so it seems depending on what documentation you read. At this level, the error messages stop being helpful. When trying to implement the syscalls the kernel would just say things like:</p>
+<blockquote><p>zsh:invalid system call  ./a.out
+Ok thanks, very useful!</p>
+</blockquote>
+<p>Enough, let's start coding:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">llvmlite</span> <span class="kn">import</span> <span class="n">ir</span>
+
+<span class="n">code</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+
+<span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">def</span> <span class="nf">block_namer</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">counter</span>
+    <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="s2">&quot;block_</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">counter</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">TAPE_LEN</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">mod</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span><span class="s2">&quot;MainModule&quot;</span><span class="p">)</span>
+<span class="n">mod</span><span class="o">.</span><span class="n">triple</span> <span class="o">=</span> <span class="s2">&quot;arm64-apple-macosx12.0.0&quot;</span>
+<span class="n">lfunc</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="p">[]),</span> <span class="s2">&quot;main&quot;</span><span class="p">)</span>
+<span class="n">entry_block</span> <span class="o">=</span> <span class="n">lfunc</span><span class="o">.</span><span class="n">append_basic_block</span><span class="p">(</span><span class="s1">&#39;entry&#39;</span><span class="p">)</span>
+<span class="n">builder</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IRBuilder</span><span class="p">(</span><span class="n">entry_block</span><span class="p">)</span>
+<span class="n">exit_block</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">append_basic_block</span><span class="p">(</span><span class="s2">&quot;exit&quot;</span><span class="p">)</span>
+<span class="n">mod</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>; ModuleID = &#34;MainModule&#34;
+target triple = &#34;arm64-apple-macosx12.0.0&#34;
+target datalayout = &#34;&#34;
+
+define i8 @&#34;main&#34;() 
+{
+entry:
+exit:
+}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The compiler starts with the following lines. It defines a main function where, like many languages, is where the program starts executing. More specifically, in the entry code block. We also create an exit block that we will later use to exit the program. Now let’s create our data structures.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tape</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">alloca</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="n">TAPE_LEN</span><span class="p">))</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="n">TAPE_LEN</span><span class="p">),</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">TAPE_LEN</span><span class="p">),</span> <span class="n">tape</span><span class="p">)</span>
+<span class="c1"># Create tape pointer</span>
+<span class="n">tape_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">gep</span><span class="p">(</span>
+    <span class="n">tape</span><span class="p">,</span> <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">0</span><span class="p">),</span> <span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">0</span><span class="p">)])</span>
+<span class="n">mod</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>; ModuleID = &#34;MainModule&#34;
+target triple = &#34;arm64-apple-macosx12.0.0&#34;
+target datalayout = &#34;&#34;
+
+define i8 @&#34;main&#34;() 
+{
+entry:
+  %&#34;.2&#34; = alloca [10 x i8]
+  store [10 x i8] [i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0], [10 x i8]* %&#34;.2&#34;
+  %&#34;.4&#34; = getelementptr [10 x i8], [10 x i8]* %&#34;.2&#34;, i8 0, i8 0
+exit:
+}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We start by allocating an array of 8-bit integers of the length <code>TAPE_LEN</code> on the stack. This comes out to <code>%".2" = alloca [10 x i8]</code>. The variable that is returned <code>%.2</code> is a pointer to the array. Notice <code>@</code> and <code>%</code>, these indicate that the variable is either global or local. For example, the function <code>@"main"</code> is global, but the pointer to the array <code>%".2"</code> is local.</p>
+<p>The next instruction initializes the array with zeroes. Notice the <code>[10 x i8]* %".2"</code>, it refers to the pointer we created earlier as it is there we are storing the zeroes. LLVM IR is strictly typed, and the types are mentioned every time a variable is used. It says that <code>%.2</code> is a pointer to an array of ten eight-bit integers.</p>
+<p>In the following instruction we create a pointer to the first element of the array and store it in <code>%.4</code></p>
+<p>In order to handle the while loops in the language we use LLVM IR's blocks. They work like labels that you can conditionally or unconditionally branch to. We keep track of the branches using a python stack (just a regular list). One issue I was having when I first started writing this compiler is that I was doing too much computation in python. I was basically precomputing the whole BF program. This is usually allowed (and recommended) for performance reasons. But then, why even write a compiler? So, the branching had to be done in BF.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">builder</span><span class="o">.</span><span class="n">append_basic_block</span><span class="p">(</span><span class="n">block_namer</span><span class="p">())]</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">branch</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">builder</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IRBuilder</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">mod</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>; ModuleID = &#34;MainModule&#34;
+target triple = &#34;arm64-apple-macosx12.0.0&#34;
+target datalayout = &#34;&#34;
+
+define i8 @&#34;main&#34;() 
+{
+entry:
+  %&#34;.2&#34; = alloca [10 x i8]
+  store [10 x i8] [i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0], [10 x i8]* %&#34;.2&#34;
+  %&#34;.4&#34; = getelementptr [10 x i8], [10 x i8]* %&#34;.2&#34;, i8 0, i8 0
+  br label %&#34;block_0&#34;
+exit:
+block_0:
+}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The following code takes a BF instructions and translates them into the corresponding IR instructions.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">code</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;+&quot;</span><span class="p">:</span>
+        <span class="n">val_at_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="n">val_at_ptr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">tape_ptr</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
+        <span class="n">val_at_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+            <span class="n">val_at_ptr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">tape_ptr</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">:</span>
+        <span class="n">tape_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">gep</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">,</span> <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">1</span><span class="p">)])</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">:</span>
+        <span class="n">tape_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">gep</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">,</span> <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)])</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span><span class="p">:</span>
+        <span class="c1"># https://go.dev/src/syscall/zsysnum_darwin_arm64.go</span>
+        <span class="n">fty</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span> <span class="p">[</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>  <span class="c1"># x16 (=4)</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>  <span class="c1"># x0 (=1)</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">as_pointer</span><span class="p">(),</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        <span class="p">])</span>
+
+        <span class="c1"># Uncomment this to make char=3 =&gt; &quot;3&quot;</span>
+        <span class="c1"># char = builder.add(char, ir.Constant(ir.IntType(8), 48))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">asm</span><span class="p">(</span><span class="n">fty</span><span class="p">,</span> <span class="s2">&quot;svc 0&quot;</span><span class="p">,</span> <span class="s2">&quot;=r,</span><span class="si">{x16}</span><span class="s2">,</span><span class="si">{x0}</span><span class="s2">,</span><span class="si">{x1}</span><span class="s2">,</span><span class="si">{x2}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">4</span><span class="p">),</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">tape_ptr</span><span class="p">,</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">),</span> <span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;print&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;e&quot;</span><span class="p">:</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">asm</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+                                    <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span> <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)]),</span>
+                    <span class="s2">&quot;svc 0&quot;</span><span class="p">,</span> <span class="s2">&quot;=r,</span><span class="si">{x0}</span><span class="s2">,</span><span class="si">{x16}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">8</span><span class="p">),</span> <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">)],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;asm_add&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;[&quot;</span><span class="p">:</span>
+        <span class="c1"># Create a new block</span>
+        <span class="c1"># Make the current block branch to the new block</span>
+        <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">append_basic_block</span><span class="p">(</span><span class="n">block_namer</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;_open&quot;</span><span class="p">))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">branch</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IRBuilder</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;]&quot;</span><span class="p">:</span>
+        <span class="c1"># Create a new block</span>
+        <span class="c1"># Make the current block branch to the new block if the value at the current pointer is 0</span>
+        <span class="n">val_at_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">)</span>
+        <span class="n">branch_condition</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">icmp_signed</span><span class="p">(</span>
+            <span class="s1">&#39;==&#39;</span><span class="p">,</span> <span class="n">val_at_ptr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">open_block</span> <span class="o">=</span> <span class="n">blocks</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">close_block</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">append_basic_block</span><span class="p">(</span>
+            <span class="n">open_block</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;open&quot;</span><span class="p">,</span> <span class="s2">&quot;close&quot;</span><span class="p">))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">cbranch</span><span class="p">(</span><span class="n">branch_condition</span><span class="p">,</span> <span class="n">close_block</span><span class="p">,</span> <span class="n">open_block</span><span class="p">)</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IRBuilder</span><span class="p">(</span><span class="n">close_block</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Increment-&amp;-Decrement">Increment &amp; Decrement<a class="anchor-link" href="#Increment-&amp;-Decrement"> </a></h3><p>There is a lot of code to unpack here. Let’s start with the <code>+</code> and <code>-</code> instructions.</p>
+<div class="highlight"><pre><span></span><span class="n">val_at_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+    <span class="n">val_at_ptr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">tape_ptr</span><span class="p">)</span>
+</pre></div>
+<p>The IR will look something like this:</p>
+
+<pre><code>%".6" = load i8, i8* %".4"
+%".7" = add i8 %".6", 1
+store i8 %".7", i8* %".4"</code></pre>
+<p>Remember that the pointer to the current element was <code>.4</code> It loads the value of the current element into <code>.6</code>, then add <code>1</code> to it and finally stores it where <code>.4</code> points.</p>
+<h3 id="Move-tape-pointer">Move tape pointer<a class="anchor-link" href="#Move-tape-pointer"> </a></h3><div class="highlight"><pre><span></span><span class="n">tape_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">gep</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">,</span> <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">1</span><span class="p">)])</span>
+</pre></div>
+<p>To move the tape pointer, we simply use the get element pointer function. This is similar to incrementing a pointer in regular C, but the function handles all the logistics with how many bytes to jump.</p>
+<h3 id="Loops">Loops<a class="anchor-link" href="#Loops"> </a></h3><h4 id="For-[:">For <code>[</code>:<a class="anchor-link" href="#For-[:"> </a></h4><div class="highlight"><pre><span></span><span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">append_basic_block</span><span class="p">(</span><span class="n">block_namer</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;_open&quot;</span><span class="p">))</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">branch</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">builder</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IRBuilder</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+<p>First, we create a new block and add it to the list of blocks. We make the current block branch to the new block unconditionally. This is because LLVM IR does not simply move to the next block after it has finished the instructions is the current block. It must explicitly be told to move to the block below (meh).</p>
+<h4 id="For-]:">For <code>]</code>:<a class="anchor-link" href="#For-]:"> </a></h4><div class="highlight"><pre><span></span><span class="n">val_at_ptr</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tape_ptr</span><span class="p">)</span>
+<span class="n">branch_condition</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">icmp_signed</span><span class="p">(</span><span class="s1">&#39;==&#39;</span><span class="p">,</span> <span class="n">val_at_ptr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">open_block</span> <span class="o">=</span> <span class="n">blocks</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="n">close_block</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">append_basic_block</span><span class="p">(</span><span class="n">open_block</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;open&quot;</span><span class="p">,</span> <span class="s2">&quot;close&quot;</span><span class="p">))</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">cbranch</span><span class="p">(</span><span class="n">branch_condition</span><span class="p">,</span> <span class="n">close_block</span><span class="p">,</span> <span class="n">open_block</span><span class="p">)</span>
+<span class="n">builder</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IRBuilder</span><span class="p">(</span><span class="n">close_block</span><span class="p">)</span>
+</pre></div>
+<p>The logic is quite similar. But in this case whether we move to the next block depends on whether the value at the current pointer is zero when we are at the end of the loop.</p>
+<p>For a program like this <code>+[&gt;+[&gt;+&lt;-]&lt;-]&gt;&gt;</code> the branching will look like this.</p>
+
+<pre><code>define i8 @"main"() 
+{
+entry:
+    ...
+    br label %"block_0"
+
+exit:
+    ...
+    ret i8 %".35"
+
+block_0:
+    ...
+    br label %"block_1_open"
+
+block_1_open:
+    ...
+    br label %"block_2_open"
+
+block_2_open:
+    ...
+    br i1 %".24", label %"block_2_close", label %"block_2_open" &lt;-- This is the end of the inner loop
+
+block_2_close:
+    ...
+    br i1 %".31", label %"block_1_close", label %"block_1_open" &lt;-- This is the end of the outer loop
+
+block_1_close:
+    ..
+    br label %"exit"</code></pre>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Now-to-the-hard-part...-&#128128;">Now to the hard part... &#128128;<a class="anchor-link" href="#Now-to-the-hard-part...-&#128128;"> </a></h2><p>We want to be able to print the current element's value to stdout. In order to do that the program has to talk to the kernel though a syscall. Think of it as calling on the operating system’s API that does things like write or read to stdout or files, open sockets, mount and unmount drives, change the permissions of files and much much more. The problem is that LLVM has nothing to do with the kernel. This is usually handled by local libraries. We therefore must implement this by writing native assembly. This is the part where the program becomes system architecture specific. I think that this is where we would normally be linking to local libraries that would handle this for us.</p>
+<p>Since I am writing this on a ARM64, that is the syscall table I have to look at. As I am writing this, I wanted to add a link to the syscall table for Darwin ARM64, but I cannot find any. During the development process I scoured various forums, blogs and source code files on github to piece together how to make the correct syscall. This might be the best <a href="https://thog.github.io/syscalls-table-aarch64/latest.html">table</a> I have found. However, it does not fully work on my machine. Depending on who you ask, Darwin ARM64 either uses register X16 or X8 to specify what syscall to make and uses either the value <code>0x40</code> or <code>4</code> or <code>0x2000004</code>. I have no idea, I must have tried all combinations of registers and values.</p>
+<h3 id="Making-the-syscall">Making the syscall<a class="anchor-link" href="#Making-the-syscall"> </a></h3><div class="highlight"><pre><span></span><span class="n">fty</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span> <span class="p">[</span>
+    <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>  <span class="c1"># x16 (=4)</span>
+    <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>  <span class="c1"># x0 (=1)</span>
+    <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">as_pointer</span><span class="p">(),</span> <span class="c1"># x1</span>
+    <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>   <span class="c1"># x2</span>
+<span class="p">])</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">asm</span><span class="p">(</span><span class="n">fty</span><span class="p">,</span> <span class="s2">&quot;svc 0&quot;</span><span class="p">,</span> <span class="s2">&quot;=r,</span><span class="si">{x16}</span><span class="s2">,</span><span class="si">{x0}</span><span class="s2">,</span><span class="si">{x1}</span><span class="s2">,</span><span class="si">{x2}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span>
+    <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">4</span><span class="p">),</span>
+    <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">tape_ptr</span><span class="p">,</span>
+    <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">)</span>
+<span class="p">),</span> <span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;print&quot;</span><span class="p">)</span>
+</pre></div>
+<p>First, we create a function type, it is basically a call signature. The assembly will return a 32-bit integer and take the following inputs. The "inputs" are values that we are going to put in the registers <code>{x16},{x0},{x1},{x2}</code>.</p>
+<ol>
+<li>32-bit integer - The type of syscall (write call)</li>
+<li>32-bit integer - Where to write (stdout)</li>
+<li>8-bit integer - Pointer to the char array (in our case only the current element)</li>
+<li>32-bit integer - The length of the char array</li>
+</ol>
+<p>Luckily, the llvmlite library has a convenient way to write out values to the registers automatically without us having to move every value into the registers. We just specify the "constraint" <code>"=r,{x16},{x0},{x1},{x2}"</code> and then pass the values in the args parameter</p>
+<div class="highlight"><pre><span></span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">4</span><span class="p">),</span>
+<span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">),</span>
+<span class="n">tape_ptr</span><span class="p">,</span>
+<span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+<p>The actual assembly is the <code>svc 0</code> instruction.</p>
+<p>I also implemented an exit instruction to BF that can be used by writing <code>e</code>. It makes an exit syscall.</p>
+<div class="highlight"><pre><span></span><span class="n">builder</span><span class="o">.</span><span class="n">asm</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+    <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span> <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)]),</span>
+    <span class="s2">&quot;svc 0&quot;</span><span class="p">,</span> <span class="s2">&quot;=r,</span><span class="si">{x0}</span><span class="s2">,</span><span class="si">{x16}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">8</span><span class="p">),</span> <span class="n">ir</span><span class="o">.</span><span class="n">IntType</span><span class="p">(</span><span class="mi">32</span><span class="p">)(</span><span class="mi">1</span><span class="p">)],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;exit&quot;</span><span class="p">)</span>
+</pre></div>
+<p>And that was pretty much it! The full code can be found in on my <a href="https://github.com/nicoloridulfo/BrainfuckLLVM">github</a>. I hope you enjoyed this post!</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/computer%20science/lowlevel/compilers/2022/02/06/Brainfuck-LLVM-compiler.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A blog about computer science and finance</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
