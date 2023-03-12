@@ -1,0 +1,135 @@
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Making my Personal Website Fast</h1><p class="page-description">My journey to making my personal website fast</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2023-03-12T00:00:00-06:00" itemprop="datePublished">
+        Mar 12, 2023
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="introduction">Introduction</h2>
+
+<blockquote>
+  <p>For a large segment of internet users, waiting for a page that may never fully load breaks the promise of the internet even to the point of putting lives at risk during emergencies.</p>
+
+  <p>A lot of energy is used to power data centers and the devices they serve. We can help reduce overall energy demands by keeping our file payloads smaller which also keeps payload transmission faster and more efficient.
+https://almanac.httparchive.org/en/2021/page-weight</p>
+</blockquote>
+
+<p>The internet has become heavier and heavier over the years. Developers pulling in random libraries and frameworks and not caring about the end user needing to download all that data. We need to return to simplicity.</p>
+
+<p>With this as my guiding principle, I set out to make my <a href="https://nicolo.io">personal website</a> as light as possible - without sacrificing on the esthetics. I will be sharing my journey and the tools I used to achieve this goal.</p>
+
+<p><strong>Disclaimer</strong>: This blog is not optimized in any way yet. I am no role model (yet). I am just taking small steps to make it better.</p>
+
+<h2 id="the-journey">The journey</h2>
+
+<p>At the moment my website serves one purpose. It hosts my CV. My ambition is not to make it look flashy with a lot of moving content. I am fond of the idea of simple websites that focus on the content. Preferably, and as mine is at the moment, they should have no javascript at all.</p>
+
+<h3 id="my-markdown-website">My markdown website</h3>
+
+<p>I host my website on github pages. They provide a free hosting service for static websites with very fast load times. They have support for markdown websites. You just write everything in a file called <code class="language-plaintext highlighter-rouge">index.md</code> and github will render it for you. This is what I used this for a while, because it was super easy to get started. No need to worry about hosting, or setting up a build pipeline. I could just focus on writing.</p>
+
+<p>The images that I am going to show below are form the “network tab” in the developer tools. They show the sequence of requests made to the content providers.</p>
+
+<p>This is what my website looked like back then.</p>
+
+<p><strong>Initial</strong>
+<img src="../images/optimizing_website/initial.jpg" alt="Initial" />
+As you can see there are a lot of request being made. Comparing it to <a href="https://httparchive.org/reports/page-weight">page-weight statistics</a> from the httparchive it wasn’t that heavy to begin with. The only issue is that there was not a lot of content on the website to justify the 1M size.
+This was mainly due to <code class="language-plaintext highlighter-rouge">mermaid.js</code>. This one library was about 200 times heavier than the actual content itself. It is a library used to convert <a href="https://mermaid.js.org">mermaid.js</a> diagrams to SVG on the client.</p>
+
+<p>I noticed that the mermaid library that I was using was not minified. Looking around I managed to find a minified version of the library. This is what it looked like after minification.</p>
+
+<p><strong>Minified Mermaid</strong>
+<img src="../images/optimizing_website/minified_mermaid.jpg" alt="Minified mermaid" /></p>
+
+<p>This managed to reduce the size of the library a bit, but there was still a lot of room for improvement.</p>
+
+<p>This is when I decided to go for a more custom solution.</p>
+
+<h3 id="html-and-css-and-svg">HTML and CSS (and SVG)</h3>
+
+<p>I realized that if I wanted to become <strong>fast</strong> I needed to ditch github’s markdown renderer.</p>
+
+<p>The website was rewritten in HTML and CSS. I also decided to pre-render the mermaid diagrams to SVG. This way I could just include the SVG in the HTML and not have to worry about the client needing to download the whole library and rendering the diagram.</p>
+
+<p><strong>HTML and SVGs</strong>
+<img src="../images/optimizing_website/html_svg.jpg" alt="HTML and SVG" /></p>
+
+<p>This was the biggest improvement in performance that I made. Now the whole website weighted about 25kb. The size was reduced 50 fold.</p>
+
+<p>During the conversion to HTML I pulled in Open Sans from google fonts to replace the one github uses for their markdown. Open Sans is the last request being made in the image above. This extended the load by about 25ms at best. Because first it loaded in a css file, which then downloaded the font.
+I tried first hosting the fonts together with the other files. Which removed the extra fetching of the css file, but now the font was many times heavier than before. As can be seen in the image below, the font request has a large portion of the bar that is blue, meaning that it is spending almost half the time downloading.</p>
+
+<p><strong>Local Font</strong>
+<img src="../images/optimizing_website/local_font.jpg" alt="Local font" /></p>
+
+<p>I ended up styling a web-safe font to look like Open Sans. This way I could get rid of the extra request and can celebrate a boot in performance.</p>
+
+<p><strong>No font</strong>
+<img src="../images/optimizing_website/no_font.jpg" alt="no font" /></p>
+
+<p>The website size had decrease to 8kb! A 150 fold improvement from the start. However, the total load time was the same because there were still a lot of different requests being made.</p>
+
+<p>At time point, the website is basically a html file that loads in two svg. A nice thing about SVGs is that they can be inlined. Meaning that everything can be bundled into a single file. This is what I did next.</p>
+
+<p><strong>Final (?)</strong>
+<img src="../images/optimizing_website/final.jpg" alt="final" /></p>
+
+<p>After manually inlining the SVGs, the website is now a single html file!</p>
+
+<p>The journey could end here. I was happy with the result. However, I wanted to see if I could do better.</p>
+
+<h2 id="using-astro">Using Astro</h2>
+
+<p>Initially I did not want to use any frameworks. I wanted to keep it as close to vanilla as possible. My requirements were simple:</p>
+
+<ul>
+  <li>No: shipping any javascript if the website was’t interactive.</li>
+  <li>No: a runtime</li>
+  <li>Yes: Server side rendering (SSR)</li>
+  <li>Yes: reusable components without the need for javascript</li>
+  <li>Yes: markdown support (future blog?)</li>
+</ul>
+
+<p>This rules out the majority of javascript frameworks I knew of. However, <a href="https://astro.build">Astro</a> looked like a good fit. It is a static site generator that uses <a href="https://www.snowpack.dev/">snowpack</a> under the hood. It also has support for markdown and SSR. I decided to give it a try.</p>
+
+<p>Converting the website from plain html to Astro was pretty straight forward. It was just a matter of factoring out the common parts into components and I was done.</p>
+
+<p>A problem that I ran into was that building using Astro generated a directory that contained:</p>
+<ul>
+  <li>index.html</li>
+  <li>subdirectory with css files</li>
+  <li>SVG files</li>
+</ul>
+
+<p>This was not ideal, it would be going back to how it was before.
+To remedy this I added a <a href="https://github.com/ridulfo/nicolo.io/blob/main/inline-styles.mjs">script</a> that at build time would inline all the css and svg files into the html file. A nice feature was that it also minified everything making the final index.html smaller!</p>
+
+<p><strong>Astro</strong>
+<img src="../images/optimizing_website/astro.jpg" alt="Astro" /></p>
+
+<p>The website was actually smaller after adding the framework (mostly thanks to the minifier).</p>
+
+<p>Note, using Astro can result in more boiler plate in the final build if the developer is not careful. For example, generously using layout components that contain one or more divs can result in an exponential increase in the amount of divs in the final html.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We can safely say that <strong>any</strong> client with using a recent browser can load this website without any issues. Even time travelers with a 56k modem can load it in under one second.</p>
+
+<p>By just taking a little bit of care and doing some optimizations it can make a huge difference in performance. This, without any impact on design, everything looks the same.</p>
+
+<p>This website is a candidate for the <a href="https://10kbclub.com/">10kb club</a>.</p>
+
+  </div><a class="u-url" href="/2023/03/12/making-a-fast-website.html" hidden></a>
+</article>
